@@ -1,0 +1,14 @@
+{
+  "name": "life-coach",
+  "version": "1.0.0",
+  "description": "AI 人生教练 —— 基于火山方舟 DeepSeek-V4-flash 的对话式成长助手",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file=.env server.js",
+    "dev": "node --env-file=.env server.js",
+    "vercel-dev": "vercel dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
