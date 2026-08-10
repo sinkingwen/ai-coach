@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!-- 声明 HTML5 文档类型，确保浏览器以标准模式渲染 -->
+<html lang="zh-CN">
+<head>
+  <!-- 字符编码与移动端适配 -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI 人生教练 —— 通过与 AI 对话获得成长建议，含对话历史与情绪分析" />
+  <title>AI 人生教练</title>
+  <!-- 引入样式表 -->
+  <link rel="stylesheet" href="css/style.css?v=2" />
+</head>
+<body>
+  <!-- 整体应用容器：头部 + 三栏主体（左历史 / 中聊天 / 右分析） -->
+  <div class="app">
+
+    <!-- ===== 顶部头部区域 ===== -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="header-left">
+          <!-- 移动端：展开/收起历史栏按钮 -->
+          <button class="icon-btn toggle-btn" id="toggleHistory" aria-label="对话历史" title="对话历史">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <!-- 站点标识：SVG 图标 + 文字标题 -->
+          <div class="brand">
+            <span class="brand-logo" aria-hidden="true">
+              <!-- 内联 SVG：一片叶子，象征成长 -->
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6"/>
+              </svg>
+            </span>
+            <div class="brand-text">
+              <h1>AI 人生教练</h1>
+              <p class="subtitle">倾听 · 共情 · 陪你成长</p>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <!-- 状态指示器：显示当前连接状态 -->
+          <span class="status-dot" id="statusDot" title="服务状态">●</span>
+          <!-- 移动端：展开/收起分析栏按钮 -->
+          <button class="icon-btn toggle-btn" id="toggleAnalysis" aria-label="对话分析" title="对话分析">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== 主体三栏区域 ===== -->
+    <div class="app-body">
+
+      <!-- ===== 左栏：对话历史 ===== -->
+      <aside class="panel panel-left" id="historyPanel" aria-label="对话历史">
+        <div class="panel-header">
+          <h2>对话历史</h2>
+          <button class="new-btn" id="newChatBtn" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            新对话
+          </button>
+        </div>
+        <!-- 历史列表：JS 动态渲染 -->
+        <ul class="history-list" id="historyList"></ul>
+        <!-- 空状态提示 -->
+        <p class="empty-hint" id="historyEmpty">还没有对话，点击“新对话”开始</p>
+      </aside>
+
+      <!-- ===== 中栏：聊天区 ===== -->
+      <main class="chat-main">
+        <!-- 消息滚动区 -->
+        <div class="chat-area" id="chatArea" aria-live="polite">
+          <!-- 欢迎卡片：首次进入或新对话时展示 -->
+          <section class="welcome" id="welcome">
+            <h2>你好，我是你的 AI 人生教练 👋</h2>
+            <p>无论是情绪困扰、职业迷茫，还是想拆解一个目标，都可以跟我说。我会先听你说，再陪你一起想办法。</p>
+            <!-- 开场建议问题列表：点击即发送 -->
+            <ul class="suggestions" id="suggestions">
+              <li><button class="suggestion-btn" type="button">最近压力有点大，不知道怎么调节</button></li>
+              <li><button class="suggestion-btn" type="button">我想养成早起习惯，该怎么开始？</button></li>
+              <li><button class="suggestion-btn" type="button">对未来很迷茫，能帮我理清方向吗？</button></li>
+              <li><button class="suggestion-btn" type="button">我和家人最近常吵架，怎么办？</button></li>
+            </ul>
+          </section>
+          <!-- 消息列表容器：JS 动态插入消息气泡 -->
+          <div class="messages" id="messages"></div>
+        </div>
+
+        <!-- 底部输入区 -->
+        <footer class="input-area">
+          <!-- 情绪选择按钮：点击主动表达当前感受（覆盖自动检测），JS 动态渲染 -->
+          <div class="emotion-picker" id="emotionPicker" role="group" aria-label="选择当前情绪"></div>
+          <form class="input-form" id="inputForm">
+            <!-- 多行输入框：支持 Shift+回车换行、回车发送 -->
+            <textarea
+              id="userInput"
+              class="user-input"
+              rows="1"
+              placeholder="和教练说说你的心里话…（回车发送，Shift+回车换行）"
+              autocomplete="off"
+              aria-label="输入消息"
+            ></textarea>
+            <!-- 发送按钮 -->
+            <button type="submit" class="send-btn" id="sendBtn" aria-label="发送">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+              </svg>
+            </button>
+          </form>
+          <p class="input-tip">可点击上方情绪按钮表达感受 · 回车发送 · Shift+回车换行 · AI 回复仅供参考</p>
+        </footer>
+      </main>
+
+      <!-- ===== 右栏：对话分析 ===== -->
+      <aside class="panel panel-right" id="analysisPanel" aria-label="对话分析">
+        <div class="panel-header">
+          <h2>对话分析</h2>
+        </div>
+        <div class="analysis-body" id="analysisBody">
+
+          <!-- 模块 1：当前情绪 -->
+          <section class="card">
+            <h3 class="card-title">当前情绪</h3>
+            <div class="emotion-now" id="emotionNow">
+              <span class="emotion-emoji" id="emotionEmoji">—</span>
+              <div class="emotion-meta">
+                <span class="emotion-label" id="emotionLabel">暂无数据</span>
+                <span class="emotion-valence" id="emotionValence"></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 模块 2：情绪分布 -->
+          <section class="card">
+            <h3 class="card-title">情绪分布</h3>
+            <div class="emotion-dist" id="emotionDist">
+              <p class="empty-hint">开始对话后这里会显示情绪占比</p>
+            </div>
+          </section>
+
+          <!-- 模块 3：情绪趋势 -->
+          <section class="card">
+            <h3 class="card-title">情绪趋势</h3>
+            <div class="emotion-trend" id="emotionTrend">
+              <p class="empty-hint">至少 2 条消息后显示趋势</p>
+            </div>
+          </section>
+
+          <!-- 模块 4：AI 深度分析 -->
+          <section class="card">
+            <h3 class="card-title">AI 深度分析</h3>
+            <button class="analyze-btn" id="analyzeBtn" type="button">生成深度分析</button>
+            <div class="analysis-result" id="analysisResult">
+              <p class="empty-hint">基于当前对话，AI 会给出情绪模式、核心议题与建议</p>
+            </div>
+          </section>
+
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- 移动端遮罩层：点击关闭抽屉 -->
+  <div class="overlay" id="overlay" hidden></div>
+
+  <!-- 引入前端逻辑脚本，defer 保证 DOM 加载后执行 -->
+  <script src="js/app.js?v=2" defer></script>
+</body>
+</html>

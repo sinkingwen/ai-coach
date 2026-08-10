@@ -1,0 +1,797 @@
+/* ============================================================
+   AI 人生教练 - 样式表
+   布局：左（对话历史）+ 中（聊天）+ 右（对话分析）三栏
+   设计：温暖治愈、简洁现代、移动优先响应式
+   技术：CSS Grid + Flexbox
+   ============================================================ */
+
+/* ===== 全局变量：统一管理主题色与尺寸 ===== */
+:root {
+  --bg-gradient: linear-gradient(160deg, #e9e3ff 0%, #d9e7ff 55%, #e3f1ea 100%); /* 治愈渐变背景 */
+  --primary: #6c5ce7;          /* 主题色：柔和紫 */
+  --primary-dark: #5641e0;     /* 主题色深：悬停态 */
+  --user-bubble: #6c5ce7;      /* 用户气泡背景 */
+  --coach-bubble: #ffffff;     /* 教练气泡背景 */
+  --text-main: #2d2a4a;        /* 主文字色 */
+  --text-muted: #8a87a8;       /* 次要文字色 */
+  --text-light: #b3b0cc;       /* 更淡文字 */
+  --border: rgba(108, 92, 231, 0.12); /* 边框色 */
+  --card-bg: rgba(255, 255, 255, 0.78); /* 卡片背景 */
+  --shadow: 0 6px 24px rgba(86, 65, 224, 0.10); /* 卡片阴影 */
+  --radius-lg: 20px;           /* 大圆角 */
+  --radius-md: 14px;           /* 中圆角 */
+  --radius-sm: 10px;           /* 小圆角 */
+  --header-h: 64px;            /* 头部高度 */
+  /* 情绪色板：用于分布与趋势图 */
+  --joy: #f6c545;
+  --calm: #4cd3a5;
+  --anxiety: #f5a623;
+  --sadness: #5b8def;
+  --anger: #ef5b5b;
+  --confusion: #b06cd9;
+}
+
+/* ===== 基础重置：清除默认外边距，盒模型统一 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Hiragino Sans GB", "Microsoft YaHei", sans-serif; /* 中英文兼容字体栈 */
+  color: var(--text-main);
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* 由内部区域各自滚动 */
+}
+
+/* ===== 应用主容器：全屏垂直布局（头部 + 三栏主体） ===== */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* 移动端动态视口高度 */
+}
+
+/* ============================================================
+   头部区域
+   ============================================================ */
+.app-header {
+  height: var(--header-h);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 20;
+}
+.header-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), #8e7bff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.35);
+}
+.brand-text h1 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+/* 状态指示点：绿色表示正常 */
+.status-dot {
+  color: #38d39f;
+  font-size: 13px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+/* 头部图标按钮（移动端切换栏用） */
+.icon-btn {
+  display: none; /* 桌面端隐藏，移动端显示 */
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(108, 92, 231, 0.08);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.icon-btn:hover { background: rgba(108, 92, 231, 0.16); }
+
+/* ============================================================
+   主体三栏区域：Grid 布局
+   ============================================================ */
+.app-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr 320px; /* 左固定 / 中自适应 / 右固定 */
+  min-height: 0; /* 关键：允许子元素滚动 */
+}
+
+/* ===== 通用侧栏面板样式 ===== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.panel-left {
+  border-right: 1px solid var(--border);
+}
+.panel-right {
+  border-left: 1px solid var(--border);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+/* “新对话”按钮 */
+.new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+.new-btn:hover { background: var(--primary-dark); }
+.new-btn:active { transform: scale(0.96); }
+
+/* ===== 历史列表 ===== */
+.history-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 10px;
+}
+.history-item {
+  position: relative;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: 1px solid transparent;
+}
+.history-item:hover {
+  background: rgba(108, 92, 231, 0.06);
+}
+.history-item.active {
+  background: rgba(108, 92, 231, 0.12);
+  border-color: var(--border);
+}
+.history-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 18px; /* 给删除按钮留位 */
+}
+.history-time {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 3px;
+}
+/* 历史项删除按钮 */
+.history-del {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0; /* 默认隐藏，悬停显示 */
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.history-item:hover .history-del { opacity: 1; }
+.history-del:hover {
+  background: rgba(239, 91, 91, 0.12);
+  color: #ef5b5b;
+}
+/* 空状态提示文字 */
+.empty-hint {
+  font-size: 12.5px;
+  color: var(--text-light);
+  padding: 16px 18px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   中栏：聊天区
+   ============================================================ */
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0; /* Grid 子元素防溢出 */
+}
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 8px;
+  scroll-behavior: smooth;
+}
+.chat-area::-webkit-scrollbar { width: 6px; }
+.chat-area::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.25);
+  border-radius: 3px;
+}
+
+/* ===== 欢迎卡片 ===== */
+.welcome {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  box-shadow: var(--shadow);
+  margin: 8px 0 24px;
+}
+.welcome h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.welcome p {
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 18px;
+}
+/* 开场建议列表：Grid 自适应两列 */
+.suggestions {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.suggestion-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: rgba(108, 92, 231, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.suggestion-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   消息气泡
+   ============================================================ */
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+.msg {
+  display: flex;
+  max-width: 100%;
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg-user { justify-content: flex-end; }
+.msg-coach { justify-content: flex-start; }
+.bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  line-height: 1.7;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.msg-user .bubble {
+  background: var(--user-bubble);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.msg-coach .bubble {
+  background: var(--coach-bubble);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+/* ===== 可折叠“思考过程”区域 ===== */
+.thinking {
+  margin: 0 0 10px;                       /* 与下方正文留距 */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(108, 92, 231, 0.05);   /* 淡紫底，区分正文 */
+  padding: 6px 10px;
+}
+/* summary：隐藏默认三角，自定义箭头 */
+.thinking-summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+  list-style: none;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.thinking-summary::-webkit-details-marker { display: none; } /* 隐藏原生标记 */
+.thinking-summary::before {
+  content: '▶';                            /* 折叠态：右箭头 */
+  font-size: 9px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.thinking[open] .thinking-summary::before {
+  transform: rotate(90deg);               /* 展开态：下箭头 */
+}
+/* 思考正文：较小字号、次要颜色、保留换行 */
+.thinking-content {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 280px;                       /* 限制最大高度，过长可内部滚动 */
+  overflow-y: auto;
+}
+.thinking-content::-webkit-scrollbar { width: 5px; }
+.thinking-content::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.2);
+  border-radius: 3px;
+}
+/* 教练正文区（与气泡默认一致，单独类名便于后续扩展） */
+.answer-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ===== 正在输入指示器（三点跳动） ===== */
+.typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 2px;
+}
+.typing span {
+  width: 7px;
+  height: 7px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40%           { opacity: 1;   transform: translateY(-4px); }
+}
+
+/* ============================================================
+   底部输入区域
+   ============================================================ */
+.input-area {
+  flex-shrink: 0;
+  padding: 10px 24px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+
+/* ===== 情绪选择按钮行 ===== */
+.emotion-picker {
+  display: flex;
+  gap: 6px;
+  padding: 0 2px 8px;
+  overflow-x: auto;            /* 窄屏可横向滚动 */
+  scrollbar-width: thin;
+}
+.emotion-picker::-webkit-scrollbar { height: 4px; }
+.emotion-picker::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.2);
+  border-radius: 2px;
+}
+/* 单个情绪按钮（芯片样式） */
+.emo-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 999px;        /* 全圆角胶囊 */
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.emo-btn:hover {
+  color: var(--text-main);
+  border-color: rgba(108, 92, 231, 0.3);
+}
+.emo-btn:active { transform: scale(0.96); }
+.emo-btn .emo-emoji { font-size: 14px; line-height: 1; }
+/* 选中态：按情绪色填充背景；黄色用深色文字保证对比度 */
+.emo-btn.selected { color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
+.emo-btn.emo-joy.selected { background: var(--joy); color: #6a5400; }
+.emo-btn.emo-calm.selected { background: var(--calm); }
+.emo-btn.emo-anxiety.selected { background: var(--anxiety); }
+.emo-btn.emo-sadness.selected { background: var(--sadness); }
+.emo-btn.emo-anger.selected { background: var(--anger); }
+.emo-btn.emo-confusion.selected { background: var(--confusion); }
+.input-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 8px 8px 8px 16px;
+  box-shadow: var(--shadow);
+}
+.user-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.6;
+  max-height: 140px;
+  font-family: inherit;
+  color: var(--text-main);
+  background: transparent;
+  padding: 6px 0;
+}
+.send-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.send-btn:hover { background: var(--primary-dark); }
+.send-btn:active { transform: scale(0.92); }
+.send-btn:disabled {
+  background: #c9c4e8;
+  cursor: not-allowed;
+}
+.input-tip {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   右栏：对话分析
+   ============================================================ */
+.analysis-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.analysis-body::-webkit-scrollbar { width: 6px; }
+.analysis-body::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.25);
+  border-radius: 3px;
+}
+/* 分析卡片 */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+/* 当前情绪模块 */
+.emotion-now {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.emotion-emoji {
+  font-size: 34px;
+  line-height: 1;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(108, 92, 231, 0.08);
+}
+.emotion-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.emotion-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.emotion-valence {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 情绪分布模块：每行一条横向条形 */
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.dist-row:last-child { margin-bottom: 0; }
+.dist-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dist-name {
+  width: 38px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.dist-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(108, 92, 231, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dist-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.dist-count {
+  font-size: 11px;
+  color: var(--text-light);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* 情绪趋势模块：SVG 图表容器 */
+.emotion-trend svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.trend-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+/* AI 深度分析模块 */
+.analyze-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), #8e7bff);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+.analyze-btn:hover { opacity: 0.92; }
+.analyze-btn:active { transform: scale(0.98); }
+.analyze-btn:disabled {
+  background: #c9c4e8;
+  cursor: not-allowed;
+}
+.analysis-result {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-main);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.analysis-result .empty-hint { padding: 0; }
+/* 分析结果加载状态 */
+.analysis-loading {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+.analysis-loading span {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+.analysis-loading span:nth-child(2) { animation-delay: 0.2s; }
+.analysis-loading span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ============================================================
+   移动端遮罩层
+   ============================================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 42, 74, 0.4);
+  z-index: 30;
+  border: none;
+  width: 100%;
+  height: 100%;
+}
+.overlay[hidden] { display: none; }
+
+/* ============================================================
+   响应式：中屏（<=1100px）隐藏右栏，改为抽屉
+   ============================================================ */
+@media (max-width: 1100px) {
+  .app-body {
+    grid-template-columns: 240px 1fr; /* 隐藏右栏 */
+  }
+  .panel-right {
+    position: fixed;
+    top: var(--header-h);
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 86vw;
+    background: rgba(245, 244, 252, 0.98);
+    z-index: 40;
+    transform: translateX(100%); /* 默认隐藏在右侧 */
+    transition: transform 0.28s ease;
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.12);
+  }
+  .panel-right.open { transform: translateX(0); }
+  /* 显示头部右侧分析按钮 */
+  .header-right .toggle-btn { display: inline-flex; }
+}
+
+/* ============================================================
+   响应式：小屏（<=760px）左栏也改为抽屉
+   ============================================================ */
+@media (max-width: 760px) {
+  .app-body {
+    grid-template-columns: 1fr; /* 仅中栏 */
+  }
+  .panel-left {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 86vw;
+    background: rgba(245, 244, 252, 0.98);
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.12);
+  }
+  .panel-left.open { transform: translateX(0); }
+  /* 显示头部左侧历史按钮 */
+  .header-left .toggle-btn { display: inline-flex; }
+
+  .chat-area { padding: 16px 14px 8px; }
+  .welcome { padding: 22px 18px; }
+  .welcome h2 { font-size: 18px; }
+  .suggestions { grid-template-columns: 1fr; }
+  .bubble { max-width: 88%; font-size: 14.5px; }
+  .input-area { padding: 10px 14px 12px; }
+  .brand-text h1 { font-size: 16px; }
+  .subtitle { display: none; }
+}
+
+/* ============================================================
+   无障碍：尊重用户“减少动画”偏好
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
