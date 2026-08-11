@@ -1,0 +1,7 @@
+server.js
+lib/
+.env
+.env.example
+README.md
+AI Rules
+.vercelignore
